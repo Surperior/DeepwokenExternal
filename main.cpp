@@ -878,7 +878,7 @@ std::vector<ChestInfo> GetAllChests() {
 //    }
 //
 //    // Simple check - if there's any animation playing with high speed, likely attacking
-//    // You can improve this later with specific animation IDs
+//    // Can improve this later with specific animation IDs
 //    //uintptr_t animStart = g_Memory.ReadPtr(activeAnims + Offsets::Instance::ChildrenStart);
 //    //uintptr_t animEnd = g_Memory.ReadPtr(activeAnims + Offsets::Instance::ChildrenEnd);
 //
@@ -1009,7 +1009,7 @@ void AutoCastThread(int castdelay) {
         }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // to make sure all frames actually appeared and it doesnt take only a couple
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // to make sure all frames actually appeared and it doesnt take only a couple symbols
 
     for (Instance child : children) {
         if (!child) continue;
