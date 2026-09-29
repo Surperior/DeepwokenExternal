@@ -3,8 +3,6 @@
 //
 //       Nel Nome Del Codice
 //
-//  The Code Shall Be Open For All
-//      My code is your code
 //
 
 #define NOMINMAX
