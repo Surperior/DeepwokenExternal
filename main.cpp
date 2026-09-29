@@ -3,8 +3,6 @@
 //
 //       Nel Nome Del Codice
 //
-//  The Code Shall Be Open For All
-//      My code is your code
 //
 
 #define NOMINMAX
@@ -40,7 +38,7 @@
 #include "LogicStructs.h" // LOGIC STRUCTURES eg. Vector
 #include "Funcs.h" // Basic Functions eg. FindChild
 #include "g_mem.h" // g_Memory
-#include "sdk.h" // Unused???
+//#include "sdk.h" // Unused???
 #include "ESP.h" // Esp engine
 #include "NpcNames.h" // Npc Bestiary
 
@@ -325,7 +323,7 @@ bool LoadOffsets(const std::string& text) {
 
             rightPart = trim(rightPart);
 
-            // Extract variable name (last word in left part)
+            // Extract variable name
             size_t lastSpace = leftPart.find_last_of(" \t");
             if (lastSpace == std::string::npos) continue;
 
@@ -951,7 +949,7 @@ std::vector<ChestInfo> GetAllChests() {
 //
 
 //
-// MACROS
+// AUTOMATION
 //
 
 void SimulateKeyPress(WORD scanCode, bool down)

@@ -185,7 +185,7 @@ void ESP::RenderPlayers(const std::vector<PlayerInfo>& players, ImDrawList* draw
             distanceOpacity = config.opacity * opacityFactor;
         }
 
-        // Draw ESP box (outline)
+        // Draw ESP box
         drawList->AddRect(
             ImVec2(bounds.left, bounds.top),
             ImVec2(bounds.right, bounds.bottom),
@@ -225,7 +225,6 @@ void ESP::RenderPlayerInfo(const PlayerInfo& player, ImDrawList* drawList, const
     float textGap = 4.0f;
 
     if (!config.showHealth) {
-        // Just show name above the box
         ImVec2 textSize = ImGui::CalcTextSize(player.name.c_str());
         drawList->AddText(
             ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
@@ -265,7 +264,7 @@ void ESP::RenderPlayerHealth(const PlayerInfo& player, ImDrawList* drawList, con
         healthText
     );
 
-    // Draw health bar - NOW BELOW THE NICKNAME, ABOVE THE BOX
+    // Draw health bar
     if (config.showHealthBar) {   // use showHealthBarNPC for NPCs
         if (distance < 120) {
             float barWidth = 8.0f;                                    // thickness of the bar
@@ -280,7 +279,7 @@ void ESP::RenderPlayerHealth(const PlayerInfo& player, ImDrawList* drawList, con
                 IM_COL32(40, 40, 40, 200)
             );
 
-            // Health fill (from bottom up)
+            // Health fill
             float fillHeight = barHeight * player.health;             // use NPC.health for NPCs
             if (fillHeight > 0.0f) {
                 drawList->AddRectFilled(
@@ -290,7 +289,7 @@ void ESP::RenderPlayerHealth(const PlayerInfo& player, ImDrawList* drawList, con
                 );
             }
 
-            // Optional: segment dividers every 20%
+            // Segment dividers every 20%
             for (int i = 1; i < 5; ++i) {
                 float dividerY = barY + barHeight * (1.0f - i * 0.2f);
                 drawList->AddLine(
@@ -310,8 +309,8 @@ void ESP::RenderPlayerHealth(const PlayerInfo& player, ImDrawList* drawList, con
             );
         }
         else {
-            float barWidth = textSize.x * 0.6;  // Use the actual text width instead of box width
-            float barHeight = 6.0f;       // Fixed height for consistent look //6
+            float barWidth = textSize.x * 0.6;
+            float barHeight = 6.0f;
             float barX = centerX - barWidth * 0.5f;
             float barY = bounds.top - barHeight + textGap / 2;
 
@@ -471,7 +470,6 @@ void ESP::RenderNPCInfo(const NPCInfo& NPC, ImDrawList* drawList, const ESPBound
     float textGap = 4.0f;
 
     if (!config.showHealthNPC) {
-        // Just show name above the box
         ImVec2 textSize = ImGui::CalcTextSize(NPC.name.c_str());
         drawList->AddText(
             ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
@@ -505,10 +503,10 @@ void ESP::RenderNPCHealth(const NPCInfo& NPC, ImDrawList* drawList, const ESPBou
         healthText
     );
 
-    // Draw health bar - NOW BELOW THE NICKNAME, ABOVE THE BOX
+    // Draw health bar 
     if (config.showHealthBarNPC) {
-        float barWidth = textSize.x * 0.6;  // Use the actual text width instead of box width
-        float barHeight = 6.0f;       // Fixed height for consistent look
+        float barWidth = textSize.x * 0.6;
+        float barHeight = 6.0f;
         float barX = centerX - barWidth * 0.5f;
         float barY = bounds.top - barHeight + textGap / 2;
 
@@ -606,7 +604,7 @@ void ESP::RenderChests(const std::vector<PlayerInfo>& players, const std::vector
             distanceOpacity = config.opacityChest * opacityFactor;
         }
 
-        // Draw ESP box (filled background)
+        // Draw ESP box
         ImU32 fillColor;
         fillColor = IM_COL32(0, 0, 0, (int)(distanceOpacity * 0));
 
@@ -616,7 +614,7 @@ void ESP::RenderChests(const std::vector<PlayerInfo>& players, const std::vector
             fillColor
         );
 
-        // Draw ESP box (outline)
+        // Draw ESP box
         drawList->AddRect(
             ImVec2(bounds.left, bounds.top),
             ImVec2(bounds.right, bounds.bottom),

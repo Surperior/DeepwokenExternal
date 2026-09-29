@@ -43,7 +43,7 @@ struct ESPConfig {
     int distChest = 1000;
     float opacityChest = 1.0f;
 
-    // Macro Related
+    // Auto Related
     bool autoFishing = false;
     bool autoCast = false;
     int castDelay = 120;

@@ -7,6 +7,10 @@
 *.env
 build*/
 .cache
+lmao.h
+types.h
+sdk.h
+sdk.cpp
 
 # User-specific files
 *.rsuser
