@@ -118,7 +118,6 @@ std::string DownloadOffsets()
         return "";
 
     std::wstring headers =
-        L"Authorization: Bearer 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\r\n"
         L"Accept: application/vnd.github.raw\r\n"
         L"X-GitHub-Api-Version: 2022-11-28\r\n"
         L"User-Agent: ViewX\r\n";
@@ -215,7 +214,6 @@ std::string DownloadNPCNames()
         return "";
 
     std::wstring headers =
-        L"Authorization: Bearer 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\r\n"
         L"Accept: application/vnd.github.raw\r\n"
         L"X-GitHub-Api-Version: 2022-11-28\r\n"
         L"User-Agent: ViewX\r\n";
