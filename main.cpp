@@ -1419,7 +1419,7 @@ int main() {
     g_esp->GetConfig().load();
 
     using clock = std::chrono::steady_clock;
-    constexpr auto frameTime = std::chrono::microseconds(8333);
+    constexpr auto frameTime = std::chrono::microseconds(833);
 
     auto frameStart = clock::now();
 
