@@ -796,7 +796,7 @@ std::vector<NPCInfo> GetAllNPC(bool ignoreuseless) {
 std::vector<ChestInfo> GetAllChests() {
     std::vector<ChestInfo> chests;
     if (!g_Game.thrown) {
-        g_Game.live = g_Game.workspace.FindFirstChild("Thrown");
+        g_Game.thrown = g_Game.workspace.FindFirstChild("Thrown");
     }
     if (!g_Game.thrown) return chests;
 
