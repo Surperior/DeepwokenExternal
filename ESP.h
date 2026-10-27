@@ -47,7 +47,7 @@ struct ESPConfig {
     bool autoFishing = false;
     bool autoCast = false;
     int castDelay = 120;
-    bool ardourSpam = false;
+    //bool ardourSpam = false;
 
     std::string trim(const std::string& str) {
         size_t first = str.find_first_not_of(" \t\r\n");
