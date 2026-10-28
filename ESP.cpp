@@ -860,7 +860,7 @@ void ESP::RenderMenu(bool* p_open) {
         if (config.testFuns) {
             ImGui::Checkbox("Ardour Scream Spam", &config.ardourSpam);
         }
-        ImGui::Text("Do not focus on another window or chat during fishing or casting it will type shit");
+        ImGui::TextDisabled("Do not focus on another window or chat during fishing or casting it will type shit");
         ImGui::Checkbox("World Event Notifs", &config.worldEventNotifs);
         ImGui::Text("To be added...");
         ImGui::NewLine();
@@ -925,7 +925,7 @@ void ESP::RenderMenu(bool* p_open) {
     }
     if (ImGui::CollapsingHeader("GUI")) {
         ImGui::Checkbox("Exclude From Capture", &config.excludeFromCapture);
-        ImGui::Text("Works on medal idk about anything other");
+        ImGui::TextDisabled("Works on medal idk about anything other");
     }
     if (ImGui::Button("Save config")) {
         GetConfig().save();
