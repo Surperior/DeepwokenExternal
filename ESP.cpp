@@ -661,6 +661,186 @@ void ESP::RenderChestInfo(const ChestInfo& chest, ImDrawList* drawList, const ES
 //
 
 //
+// CACHE RELATED STUFF
+//
+
+void ESP::RenderCache(const std::vector<PlayerInfo>& players, const std::vector<MCacheInfo>& caches, ImDrawList* drawList) {
+    if (!config.enableCacheESP || !w2s || !drawList) return;
+
+    // Find local player for distance calculations
+    PlayerInfo localPlayer;
+    for (const auto& p : players) {
+        if (p.isLocal) {
+            localPlayer = p;
+            break;
+        }
+    }
+
+    int idx = 0;
+    for (const auto& cache : caches) {
+        if (!cache.isValid) continue;
+        float distance = 10.0f;
+        // Calculate distance / Check distance
+        if (localPlayer.isValid) {
+            distance = CalculateDistance(cache.Position, localPlayer.headPosition);
+        }
+        if (distance > config.distCache) continue;
+
+        // Calculate screen positions
+        Vector3 Top = cache.Position;
+        Top.y += 0.5f;
+
+        Vector3 Bottom = cache.Position;
+        Bottom.y -= 0.5f;
+
+        Vector2 head2D = w2s->Project(Top);
+        Vector2 root2D = w2s->Project(cache.Position);
+        Vector2 foot2D = w2s->Project(Bottom);
+
+        ESPBounds bounds = ComputeBounds(head2D, root2D, foot2D, config.boxSize);
+        if (!bounds.valid) continue;
+
+        //// Distance-based opacity
+        //float distanceOpacity = config.opacityChest;
+        //if (distance > 20.0f) {
+        //    float opacityFactor = 20.0f / distance;
+        //    opacityFactor = (std::max)(0.3f, opacityFactor);
+        //    distanceOpacity = config.opacityChest * opacityFactor;
+        //}
+
+        //// Draw ESP box
+        //ImU32 fillColor;
+        //fillColor = IM_COL32(0, 0, 0, (int)(distanceOpacity * 0));
+
+        //drawList->AddRectFilled(
+        //    ImVec2(bounds.left, bounds.top),
+        //    ImVec2(bounds.right, bounds.bottom),
+        //    fillColor
+        //);
+
+        //// Draw ESP box
+        //drawList->AddRect(
+        //    ImVec2(bounds.left, bounds.top),
+        //    ImVec2(bounds.right, bounds.bottom),
+        //    IM_COL32(255, 255, 255, (int)(distanceOpacity * 255)),
+        //    0.0f,
+        //    0,
+        //    2.0f
+        //);
+
+        // Render player info
+        RenderCacheInfo(cache, drawList, bounds);
+
+        // Render distance
+        if (distance > 0.0f) {
+            char distText[32];
+            sprintf_s(distText, "%.0f", distance);
+            ImVec2 distSize = ImGui::CalcTextSize(distText);
+            float centerX = (bounds.left + bounds.right) * 0.5f;
+            drawList->AddText(
+                ImVec2(centerX - distSize.x * 0.5f, bounds.bottom + 4.0f),
+                IM_COL32(255, 255, 255, 255),
+                distText
+            );
+        }
+
+        idx++;
+    }
+}
+
+void ESP::RenderCacheInfo(const MCacheInfo& chest, ImDrawList* drawList, const ESPBounds& bounds) {
+    float centerX = (bounds.left + bounds.right) * 0.5f;
+    float textGap = 4.0f;
+
+    ImVec2 textSize = ImGui::CalcTextSize(chest.name.c_str());
+    drawList->AddText(
+        ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
+        IM_COL32(128, 0, 128, 255),
+        chest.name.c_str()
+    );
+}
+
+//
+//
+//
+
+//
+// CACHE RELATED STUFF
+//
+
+void ESP::RenderBag(const std::vector<PlayerInfo>& players, const std::vector<LootBagInfo>& bags, ImDrawList* drawList) {
+    if (!config.enableBagESP || !w2s || !drawList) return;
+
+    // Find local player for distance calculations
+    PlayerInfo localPlayer;
+    for (const auto& p : players) {
+        if (p.isLocal) {
+            localPlayer = p;
+            break;
+        }
+    }
+
+    int idx = 0;
+    for (const auto& bag : bags) {
+        if (!bag.isValid) continue;
+        float distance = 10.0f;
+        // Calculate distance / Check distance
+        if (localPlayer.isValid) {
+            distance = CalculateDistance(bag.Position, localPlayer.headPosition);
+        }
+        if (distance > config.distCache) continue;
+
+        // Calculate screen positions
+        Vector3 Top = bag.Position;
+        Top.y += 0.5f;
+
+        Vector3 Bottom = bag.Position;
+        Bottom.y -= 0.5f;
+
+        Vector2 head2D = w2s->Project(Top);
+        Vector2 root2D = w2s->Project(bag.Position);
+        Vector2 foot2D = w2s->Project(Bottom);
+
+        ESPBounds bounds = ComputeBounds(head2D, root2D, foot2D, config.boxSize);
+        if (!bounds.valid) continue;
+
+        // Render player info
+        RenderBagInfo(bag, drawList, bounds);
+
+        // Render distance
+        if (distance > 0.0f) {
+            char distText[32];
+            sprintf_s(distText, "%.0f", distance);
+            ImVec2 distSize = ImGui::CalcTextSize(distText);
+            float centerX = (bounds.left + bounds.right) * 0.5f;
+            drawList->AddText(
+                ImVec2(centerX - distSize.x * 0.5f, bounds.bottom + 4.0f),
+                IM_COL32(255, 255, 255, 255),
+                distText
+            );
+        }
+
+        idx++;
+    }
+}
+
+void ESP::RenderBagInfo(const LootBagInfo& chest, ImDrawList* drawList, const ESPBounds& bounds) {
+    float centerX = (bounds.left + bounds.right) * 0.5f;
+    float textGap = 4.0f;
+
+    ImVec2 textSize = ImGui::CalcTextSize(chest.name.c_str());
+    drawList->AddText(
+        ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
+        IM_COL32(255, 255, 255, 255),
+        chest.name.c_str()
+    );
+}
+
+//
+//
+//
+
+//
 // GUI
 //
 
@@ -729,11 +909,22 @@ void ESP::RenderMenu(bool* p_open) {
         ImGui::NewLine();
     }
 
-    if (ImGui::CollapsingHeader("Chest ESP")) {
+    if (ImGui::CollapsingHeader("Other ESP")) {
         ImGui::Checkbox("Enable Chest ESP", &config.enableChestESP);
         ImGui::SliderInt("Chest ESP Distance", &config.distChest, 100, 5000);
+
+        ImGui::Checkbox("Enable Cache ESP", &config.enableCacheESP);
+        ImGui::SliderInt("Cache ESP Distance", &config.distCache, 100, 5000);
+
+        ImGui::Checkbox("Enable Loot Bag ESP", &config.enableBagESP);
+        ImGui::SliderInt("Loot Bag ESP Distance", &config.distBag, 100, 5000);
+
         ImGui::TextDisabled("Distance depends on your roblox Graphics Quality");
         ImGui::NewLine();
+    }
+    if (ImGui::CollapsingHeader("GUI")) {
+        ImGui::Checkbox("Exclude From Capture", &config.excludeFromCapture);
+        ImGui::Text("Works on medal idk about anything other");
     }
     if (ImGui::Button("Save config")) {
         GetConfig().save();
