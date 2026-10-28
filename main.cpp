@@ -39,6 +39,7 @@
 #include "Funcs.h" // Basic Functions eg. FindChild
 #include "g_mem.h" // g_Memory
 //#include "sdk.h" // Unused???
+#include "EventNotif.h" // Event Notifications
 #include "ESP.h" // Esp engine
 #include "NpcNames.h" // Npc Bestiary
 
@@ -1282,16 +1283,26 @@ void runPrep(HWND* robloxWindow, RECT* robloxRect, HWND* g_hwndEsp, HWND* g_hwnd
         system("pause");
     }
 
+    Notifications::Push(
+        "Offsets loaded!",
+        NotificationType::Success
+    );
+
     std::cout << "[+] Offsets Loaded!" << std::endl;
 
-    //if (!LoadNPCNames(DOWNN))
-    //{
-    //    MessageBoxA(nullptr,
-    //        "[!] Couldn't load names!",
-    //        "Error",
-    //        MB_ICONERROR);
-    //    system("pause");
-    //}
+    if (!LoadNPCNames(DOWNN))
+    {
+        MessageBoxA(nullptr,
+            "[!] Couldn't load names!",
+            "Error",
+            MB_ICONERROR);
+        system("pause");
+    }
+
+    Notifications::Push(
+        "Npc names loaded!",
+        NotificationType::Success
+    );
 
     std::cout << "[+] Names Loaded!" << std::endl;
 
@@ -1655,6 +1666,10 @@ int main() {
             if (g_esp->GetConfig().excludeFromCapture != captureExcluded) {
                 captureExcluded = g_esp->GetConfig().excludeFromCapture;
                 SetCaptureExclusion(captureExcluded);
+            }
+
+            if (g_esp->GetConfig().worldEventNotifs) {
+                EventNotifications::Check();
             }
 
             char bufff[64];
