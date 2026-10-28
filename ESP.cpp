@@ -861,6 +861,7 @@ void ESP::RenderMenu(bool* p_open) {
             ImGui::Checkbox("Ardour Scream Spam", &config.ardourSpam);
         }
         ImGui::Text("Do not focus on another window or chat during fishing or casting it will type shit");
+        ImGui::Checkbox("World Event Notifs", &config.worldEventNotifs);
         ImGui::Text("To be added...");
         ImGui::NewLine();
     }
