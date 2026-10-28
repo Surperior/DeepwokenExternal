@@ -60,6 +60,7 @@ struct ESPConfig {
     bool autoCast = false;
     int castDelay = 120;
     bool ardourSpam = false;
+    bool worldEventNotifs = true;
 
     std::string trim(const std::string& str) {
         size_t first = str.find_first_not_of(" \t\r\n");
@@ -113,6 +114,7 @@ struct ESPConfig {
         out << "autoFishing=" << autoFishing << "\n";
         out << "autoCast=" << autoCast << "\n";
         out << "castDelay=" << castDelay << "\n";
+        out << "worldEventNotifs=" << worldEventNotifs << "\n";
         std::cout << "[+] Config saved successfully\n";
         Notifications::Push(
             "Config saved",
@@ -175,6 +177,7 @@ struct ESPConfig {
             else if (key == "autoFishing")        autoFishing = (val == "1" || val == "true");
             else if (key == "autoCast")           autoCast = (val == "1" || val == "true");
             else if (key == "castDelay")          castDelay = std::stof(val);
+            else if (key == "worldEventNotifs")           worldEventNotifs = (val == "1" || val == "true");
         }
         std::cout << "[+] Config loaded successfully\n";
         Notifications::Push(
