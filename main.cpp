@@ -1,4 +1,4 @@
-﻿//
+//
 //        PRAISE THE CODE
 //
 //       Nel Nome Del Codice
@@ -793,51 +793,121 @@ std::vector<NPCInfo> GetAllNPC(bool ignoreuseless) {
     return NPCS;
 }
 
-std::vector<ChestInfo> GetAllChests() {
-    std::vector<ChestInfo> chests;
+//std::vector<ChestInfo> GetAllChests() {
+//    std::vector<ChestInfo> chests;
+//    if (!g_Game.thrown) {
+//        g_Game.thrown = g_Game.workspace.FindFirstChild("Thrown");
+//    }
+//    if (!g_Game.thrown) return chests;
+//
+//    std::vector<uintptr_t> children = g_Game.thrown.GetChildren();
+//    if (children.empty()) return chests;
+//
+//    for (Instance chest : children) {
+//        if (!chest) continue;
+//        if (chest.GetClass() != "Model") continue;
+//        if (chest.FindFirstChild("Lid") == false) continue;
+//
+//        uintptr_t model = chest;
+//
+//        BasePart base = chest.FindFirstChild("RootPart");
+//
+//        if (base.get() == 0) {
+//            base = chest.FindFirstChild("Lid");
+//        }
+//
+//        /*uintptr_t primitive = g_Memory.ReadPtr(base + Offsets::BasePart::Primitive);*/
+//        Vector3 pos = base.Position();
+//        //if (primitive) {
+//        //    pos = g_Memory.ReadVector3(primitive + Offsets::Primitive::Position);
+//        //}
+//        //else {
+//        //    pos = g_Memory.ReadVector3(base + Offsets::Primitive::Position);
+//        //}
+//
+//        if (pos.x != 0 || pos.y != 0 || pos.z != 0) {
+//            ChestInfo info;
+//            info.Instance = chest;
+//            info.base = base;
+//            info.Position = pos;
+//            info.name = "Chest";
+//            info.isValid = true;
+//            chests.push_back(info);
+//        }
+//    }
+//    return chests;
+//}
+
+MiscInfo GetAllMisc() {
+    //std::vector<MiscInfo> everything;
+    MiscInfo infos;
     if (!g_Game.thrown) {
         g_Game.thrown = g_Game.workspace.FindFirstChild("Thrown");
     }
-    if (!g_Game.thrown) return chests;
+    if (!g_Game.thrown) return infos;
 
     std::vector<uintptr_t> children = g_Game.thrown.GetChildren();
-    if (children.empty()) return chests;
+    if (children.empty()) return infos;
 
-    for (Instance chest : children) {
-        if (!chest) continue;
-        if (chest.GetClass() != "Model") continue;
-        if (chest.FindFirstChild("Lid") == false) continue;
+    for (Instance item : children) {
+        if (!item) continue;
+        std::string itemName = item.GetName();
+        if (itemName == "MinistryCacheIndicator") {
+            BasePart model = item.get();
 
-        uintptr_t model = chest;
+            Vector3 pos = model.Position();
 
-        BasePart base = chest.FindFirstChild("RootPart");
-
-        if (base.get() == 0) {
-            base = chest.FindFirstChild("Lid");
+            if (pos.x != 0 || pos.y != 0 || pos.z != 0) {
+                MCacheInfo info;
+                info.Instance = model;
+                info.Position = pos;
+                info.name = "Ministry Cache";
+                info.isValid = true;
+                infos.CacheInfo.push_back(info);
+            }
         }
+        else if (itemName == "BagDrop") {
+            BasePart model = item.get();
 
-        /*uintptr_t primitive = g_Memory.ReadPtr(base + Offsets::BasePart::Primitive);*/
-        Vector3 pos = base.Position();
-        //if (primitive) {
-        //    pos = g_Memory.ReadVector3(primitive + Offsets::Primitive::Position);
-        //}
-        //else {
-        //    pos = g_Memory.ReadVector3(base + Offsets::Primitive::Position);
-        //}
+            Vector3 pos = model.Position();
 
-        if (pos.x != 0 || pos.y != 0 || pos.z != 0) {
-            ChestInfo info;
-            info.Instance = chest;
-            info.base = base;
-            info.Position = pos;
-            info.name = "Chest";
-            info.isValid = true;
-            chests.push_back(info);
+            if (pos.x != 0 || pos.y != 0 || pos.z != 0) {
+                LootBagInfo info;
+                info.Instance = model;
+                info.Position = pos;
+                info.name = "Loot Bag";
+                info.isValid = true;
+                infos.LootBagInfo.push_back(info);
+            }
         }
+        else if (item.GetClass() == "Model") {
+            if (item.FindFirstChild("Lid") == false) continue;
+
+            uintptr_t model = item;
+
+            BasePart base = item.FindFirstChild("RootPart");
+
+            if (base.get() == 0) {
+                base = item.FindFirstChild("Lid");
+            }
+
+            Vector3 pos = base.Position();
+
+            if (pos.x != 0 || pos.y != 0 || pos.z != 0) {
+                ChestInfo info;
+                info.Instance = item;
+                info.base = base;
+                info.Position = pos;
+                info.name = "Chest";
+                info.isValid = true;
+                infos.ChestInfo.push_back(info);
+            }
+        }
+        else continue;
     }
-    return chests;
+    //everything.push_back(infos);
+    return infos;
 }
-
 
 //
 // AUTO PARRY
@@ -1087,6 +1157,7 @@ UpdateTimer aUpdate{ 100 };
 UpdateTimer playerUpdate{ 16 };
 UpdateTimer npcUpdate{ 48 };
 UpdateTimer chestUpdate{ 100 };
+UpdateTimer miscUpdate{ 250 };
 UpdateTimer pointerCheck{ 500 };
 
 bool emptying = false;
@@ -1189,6 +1260,10 @@ bool InitializeGame() {
     EmptyCaches();
 
     std::cout << "[+] Game initialized successfully!" << std::endl;
+    Notifications::Push(
+        "Game initialized successfully!",
+        NotificationType::Success
+    );
     return true;
 }
 
@@ -1209,14 +1284,14 @@ void runPrep(HWND* robloxWindow, RECT* robloxRect, HWND* g_hwndEsp, HWND* g_hwnd
 
     std::cout << "[+] Offsets Loaded!" << std::endl;
 
-    if (!LoadNPCNames(DOWNN))
-    {
-        MessageBoxA(nullptr,
-            "[!] Couldn't load names!",
-            "Error",
-            MB_ICONERROR);
-        system("pause");
-    }
+    //if (!LoadNPCNames(DOWNN))
+    //{
+    //    MessageBoxA(nullptr,
+    //        "[!] Couldn't load names!",
+    //        "Error",
+    //        MB_ICONERROR);
+    //    system("pause");
+    //}
 
     std::cout << "[+] Names Loaded!" << std::endl;
 
@@ -1304,9 +1379,13 @@ void CheckGamePointers(std::vector<PlayerInfo>* players) {
     {
         std::cout << "[!] Teleport detected\n";
         players->clear();
+        std::cout << "[-] Waiting for Initialization..." << std::endl;
+        Notifications::Push(
+            "Waiting for Initialization...",
+            NotificationType::Info
+        );
         while (!InitializeGame())
         {
-            std::cout << "[-] Initialize failed retrying..." << std::endl;
             Sleep(500);
         }
     }
@@ -1330,6 +1409,24 @@ bool ShouldRenderESP()
 
     lastTime = now;
     return true;
+}
+
+void SetCaptureExclusion(bool exclude)
+{
+    DWORD affinity = exclude
+        ? WDA_EXCLUDEFROMCAPTURE
+        : WDA_NONE;
+
+    SetWindowDisplayAffinity(g_hwndEsp, affinity);
+    SetWindowDisplayAffinity(g_hwndGui, affinity);
+
+    std::cout << "[+] Capture exclusion: "
+        << (exclude ? "ON" : "OFF")
+        << '\n';
+    Notifications::Push(
+        (exclude ? "Blocking capture" : "Allowing capture"),
+        NotificationType::Info
+    );
 }
 
 //
@@ -1412,14 +1509,23 @@ int main() {
     std::vector<PlayerInfo> players;
     std::vector<NPCInfo> NPCS;
     std::vector<ChestInfo> chests;
+    MiscInfo everything;
 
     if (g_Game.localPlayer.GetName() == "ERROR463247") { g_esp->GetConfig().testFuns = true; }
+
+    Notifications::Push(
+        g_Game.localPlayer.GetName(),
+        NotificationType::Info
+    );
+
+    static bool captureExcluded = true;
+    SetCaptureExclusion(captureExcluded);
 
     std::cout << "\n[!] Trying to load config...\n";
     g_esp->GetConfig().load();
 
     using clock = std::chrono::steady_clock;
-    constexpr auto frameTime = std::chrono::microseconds(833);
+    constexpr auto frameTime = std::chrono::microseconds(8333);
 
     auto frameStart = clock::now();
 
@@ -1496,8 +1602,12 @@ int main() {
             //    }
             //}
 
-            if (chestUpdate.ready() and g_esp->GetConfig().enableChestESP) {
-                chests = GetAllChests();
+            //if (chestUpdate.ready() and g_esp->GetConfig().enableChestESP) {
+            //    chests = GetAllChests();
+            //}
+            
+            if (miscUpdate.ready() and (g_esp->GetConfig().enableChestESP or g_esp->GetConfig().enableCacheESP or g_esp->GetConfig().enableBagESP)) {
+                everything = GetAllMisc();
             }
 
             if (npcUpdate.ready() and g_esp->GetConfig().enableNPCESP) {
@@ -1514,6 +1624,7 @@ int main() {
             ImGui_ImplDX11_NewFrame();
             ImGui_ImplWin32_NewFrame();
             ImGui::NewFrame();
+            Notifications::Render();
 
             // Render ESP
             if (g_esp->GetConfig().enableESP) {
@@ -1528,7 +1639,22 @@ int main() {
 
             if (g_esp->GetConfig().enableChestESP) {
                 ImDrawList* drawList = ImGui::GetBackgroundDrawList();
-                g_esp->RenderChests(players, chests, drawList);
+                g_esp->RenderChests(players, everything.ChestInfo, drawList);
+            }
+
+            if (g_esp->GetConfig().enableCacheESP) {
+                ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+                g_esp->RenderCache(players, everything.CacheInfo, drawList);
+            }
+
+            if (g_esp->GetConfig().enableBagESP) {
+                ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+                g_esp->RenderBag(players, everything.LootBagInfo, drawList);
+            }
+            
+            if (g_esp->GetConfig().excludeFromCapture != captureExcluded) {
+                captureExcluded = g_esp->GetConfig().excludeFromCapture;
+                SetCaptureExclusion(captureExcluded);
             }
 
             char bufff[64];
