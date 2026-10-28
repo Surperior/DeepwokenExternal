@@ -58,10 +58,12 @@ namespace Notifications
         ImGuiIO& io = ImGui::GetIO();
         ImDrawList* draw = ImGui::GetForegroundDrawList();
 
-        const float width = 300.0f;
+        const float minWidth = 200.0f;
+        const float maxWidth = io.DisplaySize.x - 40.0f;
         const float height = 32.0f;
         const float spacing = 10.0f;
         const float margin = 20.0f;
+        const float paddingX = 16.0f;
 
         float yOffset = margin;
 
@@ -69,6 +71,7 @@ namespace Notifications
         for (int i = static_cast<int>(queue.size()) - 1; i >= 0; --i)
         {
             auto& n = queue[i];
+
             n.elapsed += io.DeltaTime;
 
             if (n.elapsed >= n.duration + 0.35f)
@@ -78,10 +81,18 @@ namespace Notifications
             }
         }
 
-        // Draw oldest notification at the bottom.
-        for (int i = 0; i < static_cast<int>(queue.size()); ++i)
+        // NVM Draw newest notification at the bottom. fuck em old ones
+        for (int i = static_cast<int>(queue.size()) - 1; i >= 0; --i)
         {
             auto& n = queue[i];
+
+            const ImVec2 textSize = ImGui::CalcTextSize(n.message.c_str());
+
+            const float width = std::clamp(
+                textSize.x + paddingX * 2.0f + 4.0f,
+                minWidth,
+                maxWidth
+            );
 
             const float fadeIn = std::clamp(n.elapsed / 0.2f, 0.0f, 1.0f);
             const float fadeOut = std::clamp(
@@ -132,11 +143,16 @@ namespace Notifications
                 3.0f
             );
 
-            // Notification text.
+            const float textMaxWidth = width - paddingX * 2.0f;
+
             draw->AddText(
-                ImVec2(pos.x + 16, pos.y + 11),
+                ImGui::GetFont(),
+                ImGui::GetFontSize(),
+                ImVec2(pos.x + paddingX, pos.y + 11),
                 IM_COL32(245, 245, 250, a),
-                n.message.c_str()
+                n.message.c_str(),
+                nullptr,
+                textMaxWidth
             );
 
             yOffset += height + spacing;
