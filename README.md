@@ -1,6 +1,15 @@
 # Deepwoken External Esp
-just some C++ bullshit ig
+just some C++ project i made out of boredom ig
 
-I was just bored
+### Functions:
+* Auto Cast
+* Auto Fish (Doesnt work atm i think)
+* Notifications 5 mins before world events
+* Player ESP
+* NPC ESP
+* Chest | Loot Bag | Ministry Cache ESP
+* Hide from capture by medal and other stuff
 
-Super very optimised, totally not made in 20 mins
+### Undetected
+
+Super very optimised, totally not made in like 1 day
