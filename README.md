@@ -10,6 +10,6 @@ just some C++ project i made out of boredom ig
 * Chest | Loot Bag | Ministry Cache ESP
 * Hide from capture by medal and other stuff
 
-### Undetected
+### 100000% Undetected!!1
 
 Super very optimised, totally not made in like 1 day
