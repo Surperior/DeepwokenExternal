@@ -520,7 +520,8 @@ struct CharacterParts {
     uintptr_t torso{};
     uintptr_t rootPart{};
     uintptr_t humanoid{};
-    uintptr_t armor{};
+    Value armor{};
+    Value sanity{};
     uintptr_t armorBroken{};
 };
 
@@ -554,6 +555,9 @@ CharacterParts ResolveCharacter(Instance character) {
         }
         else if (name == "Armor") {
             if (!parts.armor) parts.armor = child;
+        }
+        else if (name == "Sanity") {
+            if (!parts.sanity) parts.sanity = child;
         }
         else if (name == "ArmorBroken") {
             if (!parts.armorBroken) parts.armorBroken = child;
@@ -620,10 +624,19 @@ HealthInfo GetHealth(const CharacterParts& parts) {
 DoubleConstraint GetArmor(const CharacterParts& parts) {
     if (!parts.armor) return DoubleConstraint(0, 0, 0);
 
-    double Max = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value);
-    double Min = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value + 0x8);
-    double Val = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value + 0x10);
-    return DoubleConstraint(Max, Min, Val);
+    //double Max = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value);
+    //double Min = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value + 0x8);
+    //double Val = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value + 0x10);
+    return std::get<DoubleConstraint>(parts.armor.value()); //DoubleConstraint(Max, Min, Val);
+}
+
+DoubleConstraint GetSanity(const CharacterParts& parts) {
+    if (!parts.sanity) return DoubleConstraint(0, 0, 0);
+    
+    //double Max = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value);
+    //double Min = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value + 0x8);
+    //double Val = g_Memory.Read<double>(parts.armor + Offsets::Misc::Value + 0x10);
+    return std::get<DoubleConstraint>(parts.sanity.value()); //DoubleConstraint(Max, Min, Val);
 }
 
 std::string NormalizeNPCName(std::string name)
@@ -719,6 +732,8 @@ std::vector<PlayerInfo> GetAllPlayers() {
 
         HealthInfo hp = GetHealth(parts);
 
+        DoubleConstraint san = GetSanity(parts);
+
         if (headPos.x != 0 || headPos.y != 0 || headPos.z != 0) {
             PlayerInfo info;
             info.playerInstance = player;
@@ -729,6 +744,7 @@ std::vector<PlayerInfo> GetAllPlayers() {
             info.name = std::move(playerName);
             info.health = hp.health;
             info.maxHealth = hp.maxHealth;
+            info.sanity = san;
             info.isValid = true;
             info.isLocal = isLocal;
             players.push_back(info);
@@ -1157,7 +1173,7 @@ UpdateTimer castUpdate{ 50 };
 UpdateTimer aUpdate{ 100 };
 UpdateTimer playerUpdate{ 16 };
 UpdateTimer npcUpdate{ 48 };
-UpdateTimer chestUpdate{ 100 };
+//UpdateTimer chestUpdate{ 100 };
 UpdateTimer miscUpdate{ 250 };
 UpdateTimer pointerCheck{ 500 };
 
@@ -1296,7 +1312,7 @@ void runPrep(HWND* robloxWindow, RECT* robloxRect, HWND* g_hwndEsp, HWND* g_hwnd
             "[!] Couldn't load names!",
             "Error",
             MB_ICONERROR);
-        system("pause");
+        //system("pause");
     }
 
     Notifications::Push(
@@ -1440,6 +1456,16 @@ void SetCaptureExclusion(bool exclude)
     );
 }
 
+bool silent() {
+    std::ifstream sl("silent");
+    if (sl) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 //
 //
 //
@@ -1449,8 +1475,16 @@ void SetCaptureExclusion(bool exclude)
 ESP* g_esp = nullptr;
 WorldToScreenConverter* g_W2S = nullptr;
 
-int main() {
+int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+    bool sl = silent();
     AllocConsole();
+    if (sl) {
+        ShowWindow(GetConsoleWindow(), SW_HIDE);
+        Notifications::Push(
+            "Console hidden",
+            NotificationType::Info
+        );
+    }
     freopen("CONOUT$", "w", stdout);
     SetConsoleTitle(L"the thing");
 
@@ -1522,18 +1556,21 @@ int main() {
     std::vector<ChestInfo> chests;
     MiscInfo everything;
 
-    if (g_Game.localPlayer.GetName() == "ERROR463247") { g_esp->GetConfig().testFuns = true; }
+    //if (g_Game.localPlayer.GetName() == "ERROR463247") { g_esp->GetConfig().testFuns = true; }
 
     Notifications::Push(
-        g_Game.localPlayer.GetName(),
+        "Running for player: "+g_Game.localPlayer.GetName(),
         NotificationType::Info
     );
 
     static bool captureExcluded = true;
+    static bool consoleHidden = false;
     SetCaptureExclusion(captureExcluded);
 
     std::cout << "\n[!] Trying to load config...\n";
     g_esp->GetConfig().load();
+
+    if (sl) { g_esp->GetConfig().hideConsole = true; }
 
     using clock = std::chrono::steady_clock;
     constexpr auto frameTime = std::chrono::microseconds(8333);
@@ -1599,6 +1636,18 @@ int main() {
 
         if (ShouldRenderESP())
         {
+            if (g_esp->GetConfig().hideConsole != consoleHidden) {
+                consoleHidden = g_esp->GetConfig().hideConsole;
+                DWORD sh = consoleHidden ? SW_HIDE
+                    : SW_SHOW;
+                ShowWindow(GetConsoleWindow(), sh);
+            }
+
+            if (g_esp->GetConfig().excludeFromCapture != captureExcluded) {
+                captureExcluded = g_esp->GetConfig().excludeFromCapture;
+                SetCaptureExclusion(captureExcluded);
+            }
+
             if (fishUpdate.ready() and g_esp->GetConfig().autoFishing and (!emptying)) {
                 AutoFish();
             }
@@ -1661,11 +1710,6 @@ int main() {
             if (g_esp->GetConfig().enableBagESP) {
                 ImDrawList* drawList = ImGui::GetBackgroundDrawList();
                 g_esp->RenderBag(players, everything.LootBagInfo, drawList);
-            }
-            
-            if (g_esp->GetConfig().excludeFromCapture != captureExcluded) {
-                captureExcluded = g_esp->GetConfig().excludeFromCapture;
-                SetCaptureExclusion(captureExcluded);
             }
 
             if (g_esp->GetConfig().worldEventNotifs) {
@@ -1749,7 +1793,7 @@ int main() {
     delete g_W2S;
 
     std::cout << "\nCleanup complete. Press any key to exit..." << std::endl;
-    system("pause");
+    //system("pause");
     FreeConsole();
 
     return 0;
