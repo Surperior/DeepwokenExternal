@@ -25,10 +25,16 @@ struct ESPConfig {
     bool showOtherPlayers = true;
     //bool allPlayersMode = true;
 
+    bool textAutoSize = true;
     bool showHealth = true;
+    bool showHealthPercentage = true;
     bool showHealthText = true;
     bool showHealthBar = true;
     bool ColoredBar = true;
+    bool showSanity = true;
+    bool showSanityPercentage = true;
+    bool showSanityBar = true;
+    bool showSanityText = false;
 
     bool enableNPCESP = true;
     int distNPC = 1000;
@@ -54,6 +60,8 @@ struct ESPConfig {
 
     // GUI related
     bool excludeFromCapture = true;
+    bool hideConsole = false;
+    bool silentLaunch = false;
 
     // Auto Related
     bool autoFishing = false;
@@ -76,17 +84,28 @@ struct ESPConfig {
             std::cout << "[-] Failed to save config\n";
             return;
         }
-
+        if (silentLaunch) {
+            std::ofstream sl("silent");
+        }
+        else {
+            std::remove("silent");
+        }
         out << "enableESP=" << enableESP << '\n';
         out << "boxSize=" << boxSize << '\n';
         out << "opacity=" << opacity << '\n';
         out << "dist=" << dist << '\n';
         out << "showLocalPlayer=" << showLocalPlayer << '\n';
         out << "showOtherPlayers=" << showOtherPlayers << '\n';
+        out << "textAutoSize=" << textAutoSize << '\n';
         out << "showHealth=" << showHealth << '\n';
+        out << "showHealthPercentage=" << showHealthPercentage << '\n';
         out << "showHealthText=" << showHealthText << '\n';
         out << "showHealthBar=" << showHealthBar << '\n';
         out << "ColoredBar=" << ColoredBar << '\n';
+        out << "showSanity=" << showSanity << '\n';
+        out << "showSanityPercentage=" << showSanityPercentage << '\n';
+        out << "showSanityBar=" << showSanity << '\n';
+        out << "showSanityText=" << showSanity << '\n';
 
         out << "enableNPCESP=" << enableNPCESP << '\n';
         out << "distNPC=" << distNPC << '\n';
@@ -110,6 +129,8 @@ struct ESPConfig {
         out << "opacityBag=" << opacityBag << '\n';
         // GUI
         out << "excludeFromCapture=" << excludeFromCapture << '\n';
+        out << "hideConsole=" << hideConsole << '\n';
+        out << "silentLaunch=" << silentLaunch << '\n';
         // Macros
         out << "autoFishing=" << autoFishing << "\n";
         out << "autoCast=" << autoCast << "\n";
@@ -140,44 +161,52 @@ struct ESPConfig {
             std::string key = trim(line.substr(0, eq));
             std::string val = trim(line.substr(eq + 1));
 
-            if (key == "enableESP")               enableESP = (val == "1" || val == "true");
-            else if (key == "boxSize")            boxSize = std::stof(val);
-            else if (key == "opacity")            opacity = std::stof(val);
-            else if (key == "dist")               dist = std::stof(val);
-            else if (key == "showLocalPlayer")    showLocalPlayer = (val == "1" || val == "true");
-            else if (key == "showOtherPlayers")   showOtherPlayers = (val == "1" || val == "true");
-            else if (key == "showHealth")         showHealth = (val == "1" || val == "true");
-            else if (key == "showHealthText")     showHealthText = (val == "1" || val == "true");
-            else if (key == "showHealthBar")      showHealthBar = (val == "1" || val == "true");
-            else if (key == "ColoredBar")         ColoredBar = (val == "1" || val == "true");
+            if (key == "enableESP")                     enableESP = (val == "1" || val == "true");
+            else if (key == "boxSize")                  boxSize = std::stof(val);
+            else if (key == "opacity")                  opacity = std::stof(val);
+            else if (key == "dist")                     dist = std::stof(val);
+            else if (key == "showLocalPlayer")          showLocalPlayer = (val == "1" || val == "true");
+            else if (key == "showOtherPlayers")         showOtherPlayers = (val == "1" || val == "true");
+            else if (key == "textAutoSize")             textAutoSize = (val == "1" || val == "true");
+            else if (key == "showHealth")               showHealth = (val == "1" || val == "true");
+            else if (key == "showHealthPercentage")     showHealthPercentage = (val == "1" || val == "true");
+            else if (key == "showHealthText")           showHealthText = (val == "1" || val == "true");
+            else if (key == "showHealthBar")            showHealthBar = (val == "1" || val == "true");
+            else if (key == "ColoredBar")               ColoredBar = (val == "1" || val == "true");
+            else if (key == "showSanity")               showSanity = (val == "1" || val == "true");
+            else if (key == "showSanityPercentage")     showSanityPercentage = (val == "1" || val == "true");
+            else if (key == "showSanityBar")            showSanityBar = (val == "1" || val == "true");
+            else if (key == "showSanityText")           showSanityText = (val == "1" || val == "true");
             // NPC
-            else if (key == "enableNPCESP")       enableNPCESP = (val == "1" || val == "true");
-            else if (key == "distNPC")            distNPC = std::stof(val);
-            else if (key == "opacityNPC")         opacityNPC = std::stof(val);
-            else if (key == "showHealthNPC")      showHealthNPC = (val == "1" || val == "true");
-            else if (key == "showHealthBarNPC")   showHealthBarNPC = (val == "1" || val == "true");
-            else if (key == "showHealthTextNPC")  showHealthTextNPC = (val == "1" || val == "true");
-            else if (key == "showArmorTextNPC")   showArmorTextNPC = (val == "1" || val == "true");
-            else if (key == "hideUselessNPC")     hideUselessNPC = (val == "1" || val == "true");
+            else if (key == "enableNPCESP")             enableNPCESP = (val == "1" || val == "true");
+            else if (key == "distNPC")                  distNPC = std::stof(val);
+            else if (key == "opacityNPC")               opacityNPC = std::stof(val);
+            else if (key == "showHealthNPC")            showHealthNPC = (val == "1" || val == "true");
+            else if (key == "showHealthBarNPC")         showHealthBarNPC = (val == "1" || val == "true");
+            else if (key == "showHealthTextNPC")        showHealthTextNPC = (val == "1" || val == "true");
+            else if (key == "showArmorTextNPC")         showArmorTextNPC = (val == "1" || val == "true");
+            else if (key == "hideUselessNPC")           hideUselessNPC = (val == "1" || val == "true");
             // CHEST
-            else if (key == "enableChestESP")     enableChestESP = (val == "1" || val == "true");
-            else if (key == "distChest")          distChest = std::stof(val);
-            else if (key == "opacityChest")       opacityChest = std::stof(val);
+            else if (key == "enableChestESP")           enableChestESP = (val == "1" || val == "true");
+            else if (key == "distChest")                distChest = std::stof(val);
+            else if (key == "opacityChest")             opacityChest = std::stof(val);
             // MINISTRY CACHE
-            else if (key == "enableCacheESP")     enableCacheESP = (val == "1" || val == "true");
-            else if (key == "distCache")          distCache = std::stof(val);
-            else if (key == "opacityCache")       opacityCache = std::stof(val);
+            else if (key == "enableCacheESP")           enableCacheESP = (val == "1" || val == "true");
+            else if (key == "distCache")                distCache = std::stof(val);
+            else if (key == "opacityCache")             opacityCache = std::stof(val);
             // LOOT BAG
-            else if (key == "enableBagESP")     enableBagESP = (val == "1" || val == "true");
-            else if (key == "distBag")          distBag = std::stof(val);
-            else if (key == "opacityBag")       opacityBag = std::stof(val);
+            else if (key == "enableBagESP")             enableBagESP = (val == "1" || val == "true");
+            else if (key == "distBag")                  distBag = std::stof(val);
+            else if (key == "opacityBag")               opacityBag = std::stof(val);
             // GUI
-            else if (key == "excludeFromCapture") excludeFromCapture = (val == "1" || val == "true");
+            else if (key == "excludeFromCapture")       excludeFromCapture = (val == "1" || val == "true");
+            else if (key == "hideConsole")              hideConsole = (val == "1" || val == "true");
+            else if (key == "silentLaunch")             silentLaunch = (val == "1" || val == "true");
             // Macros
-            else if (key == "autoFishing")        autoFishing = (val == "1" || val == "true");
-            else if (key == "autoCast")           autoCast = (val == "1" || val == "true");
-            else if (key == "castDelay")          castDelay = std::stof(val);
-            else if (key == "worldEventNotifs")           worldEventNotifs = (val == "1" || val == "true");
+            else if (key == "autoFishing")              autoFishing = (val == "1" || val == "true");
+            else if (key == "autoCast")                 autoCast = (val == "1" || val == "true");
+            else if (key == "castDelay")                castDelay = std::stof(val);
+            else if (key == "worldEventNotifs")         worldEventNotifs = (val == "1" || val == "true");
         }
         std::cout << "[+] Config loaded successfully\n";
         Notifications::Push(
@@ -200,11 +229,12 @@ struct PlayerInfo {
     std::string name;
     float health;
     float maxHealth;
+    DoubleConstraint sanity;
     bool isValid;
     bool isLocal;
 
     PlayerInfo() : playerInstance(0), character(0), isValid(false), isLocal(false),
-        health(1.0f), maxHealth(100.0f) {}
+        health(1.0f), maxHealth(100.0f), sanity(1.0f,1.0f,1.0f) {}
 };
 
 struct NPCInfo {
@@ -309,8 +339,9 @@ public:
 
     // Rendering
     void RenderPlayers(const std::vector<PlayerInfo>& players, ImDrawList* drawList);
-    void RenderPlayerBox(const PlayerInfo& player, ImDrawList* drawList);
+    //void RenderPlayerBox(const PlayerInfo& player, ImDrawList* drawList);
     void RenderPlayerHealth(const PlayerInfo& player, ImDrawList* drawList, const ESPBounds& bounds, const float distance);
+    void RenderPlayerSanity(const PlayerInfo& player, ImDrawList* drawList, const ESPBounds& bounds, const float distance);
     void RenderPlayerInfo(const PlayerInfo& player, ImDrawList* drawList, const ESPBounds& bounds);
     void RenderNPC(const std::vector<PlayerInfo>& players, const std::vector<NPCInfo>& NPC, ImDrawList* drawList);
     void RenderNPCInfo(const NPCInfo& NPC, ImDrawList* drawList, const ESPBounds& bounds);
