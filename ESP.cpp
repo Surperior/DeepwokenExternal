@@ -195,13 +195,16 @@ void ESP::RenderPlayers(const std::vector<PlayerInfo>& players, ImDrawList* draw
             2.0f
         );
 
-        // Render player info
-        RenderPlayerInfo(player, drawList, bounds);
-
         // Render health
         if (config.showHealth) {
             RenderPlayerHealth(player, drawList, bounds, distance);
         }
+        if (config.showSanity) {
+            RenderPlayerSanity(player, drawList, bounds, distance);
+        }
+
+        // Render player info
+        RenderPlayerInfo(player, drawList, bounds);
 
         // Render distance
         if (distance > 0.0f) {
@@ -223,13 +226,59 @@ void ESP::RenderPlayers(const std::vector<PlayerInfo>& players, ImDrawList* draw
 void ESP::RenderPlayerInfo(const PlayerInfo& player, ImDrawList* drawList, const ESPBounds& bounds) {
     float centerX = (bounds.left + bounds.right) * 0.5f;
     float textGap = 4.0f;
+    ImU32 HTextColor = IM_COL32(255, 255, 255, 255);
+    float currentHealth = player.health * player.maxHealth;
+    float currentSanity = player.sanity.Value;
+
+    if (config.ColoredBar) {
+        HTextColor = GetHealthColor(player.health);
+    }
+
+    //char headText[128];
+    std::string headText = player.name;
+    //if (config.showHealthText) {
+    //    sprintf_s(headText, "%s [%d/%d]", player.name.c_str(),
+    //        (int)currentHealth, (int)player.maxHealth);
+    //}
+    //else {
+    //    sprintf_s(headText, "%s", player.name.c_str());
+    //}
+    if (config.showHealthText) {
+        if (config.showHealthPercentage) {
+            headText += " [" + std::to_string((int)((currentHealth/player.maxHealth)*100)) + "%/100%]";
+        }
+        else {
+            headText += " [" + std::to_string((int)currentHealth) + "/" + std::to_string((int)player.maxHealth) + "]";
+        }
+    }
+
+    if (config.showSanityText) {
+        if (config.showSanityPercentage) {
+            headText += " [" + std::to_string((int)((currentSanity / player.sanity.MaxValue) * 100)) + "%/100%]";
+        }
+        else {
+            headText += " [" + std::to_string((int)currentSanity) + "/" + std::to_string((int)player.sanity.MaxValue) + "]";
+        }
+    }
+
+    //ImVec2 textSize = ImGui::CalcTextSize("AAAAAAAAA");
+
+    //if (config.textAutoSize) {
+    ImVec2 textSize = ImGui::CalcTextSize(headText.c_str());
+    //}
 
     if (!config.showHealth) {
-        ImVec2 textSize = ImGui::CalcTextSize(player.name.c_str());
         drawList->AddText(
             ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
             IM_COL32(255, 255, 255, 255),
             player.name.c_str()
+        );
+    }
+    else {
+        drawList->AddText(
+            ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
+            HTextColor,
+            headText.c_str()
         );
     }
 }
@@ -240,29 +289,29 @@ void ESP::RenderPlayerHealth(const PlayerInfo& player, ImDrawList* drawList, con
     float currentHealth = player.health * player.maxHealth;
     ImU32 healthColor = GetHealthColor(player.health);
     ImU32 BarColor = IM_COL32(197, 107, 47, 255);
-    ImU32 HTextColor = IM_COL32(255, 255, 255, 255);
+    //ImU32 HTextColor = IM_COL32(255, 255, 255, 255);
     if (config.ColoredBar) {
         BarColor = healthColor;
-        HTextColor = healthColor;
+        //HTextColor = healthColor;
     }
 
     // Format health text
-    char healthText[128];
-    if (config.showHealthText) {
-        sprintf_s(healthText, "%s [%d/%d]", player.name.c_str(),
-            (int)currentHealth, (int)player.maxHealth);
-    }
-    else {
-        sprintf_s(healthText, "%s", player.name.c_str());
-    }
-    ImVec2 textSize = ImGui::CalcTextSize(healthText);
+    //char healthText[128];
+    //if (config.showHealthText) {
+    //    sprintf_s(healthText, "%s [%d/%d]", player.name.c_str(),
+    //        (int)currentHealth, (int)player.maxHealth);
+    //}
+    //else {
+    //    sprintf_s(healthText, "%s", player.name.c_str());
+    //}
+    ImVec2 textSize = ImGui::CalcTextSize("AAAAAAAAA");
 
-    // Draw health text above the box
-    drawList->AddText(
-        ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
-        HTextColor,
-        healthText
-    );
+    //// Draw health text above the box
+    //drawList->AddText(
+    //    ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
+    //    HTextColor,
+    //    healthText
+    //);
 
     // Draw health bar
     if (config.showHealthBar) {   // use showHealthBarNPC for NPCs
@@ -352,6 +401,89 @@ void ESP::RenderPlayerHealth(const PlayerInfo& player, ImDrawList* drawList, con
                 0.0f,
                 0,
                 1.0f
+            );
+        }
+    }
+
+    // Health text on the side of the box (only if health bar is disabled)
+    //if (config.showHealthText && !config.showHealthBar) {
+    //    char healthValueText[32];
+    //    sprintf_s(healthValueText, "%d/%d", (int)currentHealth, (int)player.maxHealth);
+    //    drawList->AddText(
+    //        ImVec2(bounds.right + 5.0f, bounds.top),
+    //        healthColor,
+    //        healthValueText
+    //    );
+    //}
+}
+
+void ESP::RenderPlayerSanity(const PlayerInfo& player, ImDrawList* drawList, const ESPBounds& bounds, const float distance) {
+    float centerX = (bounds.left + bounds.right) * 0.5f;
+    float textGap = 4.0f;
+    float currentSanity = player.sanity.Value / player.sanity.MaxValue;
+    ImU32 BarColor = IM_COL32(133, 238, 223, 255);
+    ImU32 HTextColor = IM_COL32(255, 255, 255, 255);
+
+    // Format health text
+    //char healthText[128];
+    //if (config.showHealthText) {
+    //    sprintf_s(healthText, "%s [%d/%d]", player.name.c_str(),
+    //        (int)currentSanity, (int)player.sanity.MaxValue);
+    //}
+    //else {
+    //    sprintf_s(healthText, "%s", player.name.c_str());
+    //}
+    //ImVec2 textSize = ImGui::CalcTextSize(healthText);
+
+    //// Draw health text above the box
+    //drawList->AddText(
+    //    ImVec2(centerX - textSize.x * 0.5f, bounds.top - textSize.y - textGap),
+    //    HTextColor,
+    //    healthText
+    //);
+
+    // Draw health bar
+    if (config.showSanityBar) {   // use showHealthBarNPC for NPCs
+        if (distance < 120) {
+            float barWidth = 8.0f;                                    // thickness of the bar
+            float barHeight = bounds.bottom - bounds.top;             // full height of the box
+            float barX = bounds.right - barWidth + 11.0f;              // 3px gap from the box
+            float barY = bounds.top;
+
+            // Background
+            drawList->AddRectFilled(
+                ImVec2(barX, barY),
+                ImVec2(barX + barWidth, barY + barHeight),
+                IM_COL32(40, 40, 40, 200)
+            );
+
+            // Health fill
+            float fillHeight = barHeight * currentSanity;             // use NPC.health for NPCs
+            if (fillHeight > 0.0f) {
+                drawList->AddRectFilled(
+                    ImVec2(barX, barY + (barHeight - fillHeight)),
+                    ImVec2(barX + barWidth, barY + barHeight),
+                    BarColor
+                );
+            }
+
+            // Segment dividers every 20%
+            for (int i = 1; i < 5; ++i) {
+                float dividerY = barY + barHeight * (1.0f - i * 0.2f);
+                drawList->AddLine(
+                    ImVec2(barX, dividerY),
+                    ImVec2(barX + barWidth, dividerY),
+                    IM_COL32(0, 0, 0, 220),
+                    1.0f
+                );
+            }
+
+            // Outline
+            drawList->AddRect(
+                ImVec2(barX, barY),
+                ImVec2(barX + barWidth, barY + barHeight),
+                IM_COL32(0, 0, 0, 255),
+                0.0f, 0, 1.0f
             );
         }
     }
@@ -875,7 +1007,8 @@ void ESP::RenderMenu(bool* p_open) {
         ImGui::Checkbox("Enable ESP", &config.enableESP);
         ImGui::SliderInt("ESP Distance", &config.dist, 0, 100000);
         ImGui::SliderFloat("ESP Size", &config.boxSize, 100.0f, 140.0f);
-        ImGui::SliderFloat("Opacity", &config.opacity, 0.0f, 1.0f);
+        //ImGui::SliderFloat("Opacity", &config.opacity, 0.0f, 1.0f);
+        //ImGui::Checkbox("Auto Size Text", &config.textAutoSize);
 
         ImGui::Separator();
         ImGui::Checkbox("Local Player", &config.showLocalPlayer);
@@ -883,6 +1016,7 @@ void ESP::RenderMenu(bool* p_open) {
         //ImGui::Checkbox("All Players Mode", &config.allPlayersMode);
 
         ImGui::Checkbox("Show Health", &config.showHealth);
+        ImGui::SameLine(); ImGui::Checkbox("Show Health %", &config.showHealthPercentage);
         if (config.showHealth) {
             ImGui::Indent();
             ImGui::Checkbox("Show Health Bar", &config.showHealthBar);
@@ -890,6 +1024,14 @@ void ESP::RenderMenu(bool* p_open) {
                 ImGui::SameLine(); ImGui::Checkbox("Colored Bar", &config.ColoredBar);
             }
             ImGui::Checkbox("Show Health Text", &config.showHealthText);
+            ImGui::Unindent();
+        }
+        ImGui::Checkbox("Show Sanity", &config.showSanity);
+        ImGui::SameLine(); ImGui::Checkbox("Show Sanity %", &config.showSanityPercentage);
+        if (config.showSanity) {
+            ImGui::Indent();
+            ImGui::Checkbox("Show Sanity Bar", &config.showSanityBar);
+            ImGui::Checkbox("Show Sanity Text", &config.showSanityText);
             ImGui::Unindent();
         }
         ImGui::NewLine();
@@ -926,6 +1068,8 @@ void ESP::RenderMenu(bool* p_open) {
     if (ImGui::CollapsingHeader("GUI")) {
         ImGui::Checkbox("Exclude From Capture", &config.excludeFromCapture);
         ImGui::TextDisabled("Works on medal idk about anything other");
+        ImGui::Checkbox("Hide Console", &config.hideConsole);
+        ImGui::Checkbox("Silent Launch", &config.silentLaunch);
     }
     if (ImGui::Button("Save config")) {
         GetConfig().save();
