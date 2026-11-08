@@ -35,6 +35,9 @@ struct ESPConfig {
     bool showSanityPercentage = true;
     bool showSanityBar = true;
     bool showSanityText = false;
+    bool showPower = false;
+    bool useName = true;
+    bool showPlayerName = false;
 
     bool enableNPCESP = true;
     int distNPC = 1000;
@@ -106,6 +109,9 @@ struct ESPConfig {
         out << "showSanityPercentage=" << showSanityPercentage << '\n';
         out << "showSanityBar=" << showSanity << '\n';
         out << "showSanityText=" << showSanity << '\n';
+        out << "showPower=" << showPower << '\n';
+        out << "useName=" << useName << '\n';
+        out << "showPlayerName=" << showPlayerName << '\n';
 
         out << "enableNPCESP=" << enableNPCESP << '\n';
         out << "distNPC=" << distNPC << '\n';
@@ -177,6 +183,9 @@ struct ESPConfig {
             else if (key == "showSanityPercentage")     showSanityPercentage = (val == "1" || val == "true");
             else if (key == "showSanityBar")            showSanityBar = (val == "1" || val == "true");
             else if (key == "showSanityText")           showSanityText = (val == "1" || val == "true");
+            else if (key == "showPower")                showPower = (val == "1" || val == "true");
+            else if (key == "useName")                  useName = (val == "1" || val == "true");
+            else if (key == "showPlayerName")           showPlayerName = (val == "1" || val == "true");
             // NPC
             else if (key == "enableNPCESP")             enableNPCESP = (val == "1" || val == "true");
             else if (key == "distNPC")                  distNPC = std::stof(val);
@@ -227,14 +236,16 @@ struct PlayerInfo {
     Vector3 torsoPosition;
     Vector3 rootPosition;
     std::string name;
+    std::string cname;
     float health;
     float maxHealth;
+    float power;
     DoubleConstraint sanity;
     bool isValid;
     bool isLocal;
 
     PlayerInfo() : playerInstance(0), character(0), isValid(false), isLocal(false),
-        health(1.0f), maxHealth(100.0f), sanity(1.0f,1.0f,1.0f) {}
+        health(1.0f), maxHealth(100.0f), sanity(1.0f,1.0f,1.0f), power(0.0f) {}
 };
 
 struct NPCInfo {
