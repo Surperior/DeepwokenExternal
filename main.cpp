@@ -519,7 +519,7 @@ struct CharacterParts {
     uintptr_t head{};
     uintptr_t torso{};
     uintptr_t rootPart{};
-    uintptr_t humanoid{};
+    Instance humanoid{};
     Value armor{};
     Value sanity{};
     uintptr_t armorBroken{};
@@ -710,12 +710,12 @@ std::vector<PlayerInfo> GetAllPlayers() {
     std::vector<uintptr_t> children = g_Game.live.GetChildren();
     if (children.empty()) return players;
 
-    const std::string localPlayerName = g_Game.localPlayer.GetName();
+    const std::string localPlayerName = g_Game.localPlayer.name();
 
     for (Instance player : children) {
         if (!player) continue;
 
-        std::string playerName = player.GetName();
+        std::string playerName = player.name();
         bool isLocal = (playerName == localPlayerName);
         if (playerName.find('.') == 0) continue;
 
@@ -742,6 +742,8 @@ std::vector<PlayerInfo> GetAllPlayers() {
             info.torsoPosition = torsoPos;
             info.rootPosition = rootPos;
             info.name = std::move(playerName);
+            info.cname = parts.humanoid.attribute("CharacterName").value.ToString();
+            info.power = player.attribute("Level").value.numberValue;
             info.health = hp.health;
             info.maxHealth = hp.maxHealth;
             info.sanity = san;
@@ -767,7 +769,7 @@ std::vector<NPCInfo> GetAllNPC(bool ignoreuseless) {
     for (Instance NPC : children) {
         if (!NPC) continue;
 
-        std::string NPCName = NPC.GetName();
+        std::string NPCName = NPC.name();
         if (!NPCName.find('.') == 0) continue;
 
         std::string key = NormalizeNPCName(std::move(NPCName));
@@ -868,11 +870,11 @@ MiscInfo GetAllMisc() {
 
     for (Instance item : children) {
         if (!item) continue;
-        std::string itemName = item.GetName();
+        std::string itemName = item.name();
         if (itemName == "MinistryCacheIndicator") {
             BasePart model = item.get();
 
-            Vector3 pos = model.Position();
+            Vector3 pos = model.position();
 
             if (pos.x != 0 || pos.y != 0 || pos.z != 0) {
                 MCacheInfo info;
@@ -886,7 +888,7 @@ MiscInfo GetAllMisc() {
         else if (itemName == "BagDrop") {
             BasePart model = item.get();
 
-            Vector3 pos = model.Position();
+            Vector3 pos = model.position();
 
             if (pos.x != 0 || pos.y != 0 || pos.z != 0) {
                 LootBagInfo info;
@@ -897,8 +899,8 @@ MiscInfo GetAllMisc() {
                 infos.LootBagInfo.push_back(info);
             }
         }
-        else if (item.GetClass() == "Model") {
-            if (item.FindFirstChild("Lid") == false) continue;
+        else if (item.class_name() == "Model") {
+            if (item.FindFirstChild("Lid").get() == false) continue;
 
             uintptr_t model = item;
 
@@ -908,7 +910,7 @@ MiscInfo GetAllMisc() {
                 base = item.FindFirstChild("Lid");
             }
 
-            Vector3 pos = base.Position();
+            Vector3 pos = base.position();
 
             if (pos.x != 0 || pos.y != 0 || pos.z != 0) {
                 ChestInfo info;
@@ -1089,7 +1091,7 @@ void AutoCastThread(int castdelay) {
     std::string ritual;
     for (Instance child : children) {
         if (!child) continue;
-        if (child.GetName() == "Frame") {
+        if (child.name() == "Frame") {
             autoCastCasting = true;
         }
     }
@@ -1098,7 +1100,7 @@ void AutoCastThread(int castdelay) {
 
     for (Instance child : children) {
         if (!child) continue;
-        if (child.GetName() == "Frame") {
+        if (child.name() == "Frame") {
             Instance label = child.FindFirstChild("TextLabel");
             if (!label) continue;
             ritual += g_Memory.ReadRobloxString(label + Offsets::GuiObject::Text);
@@ -1559,7 +1561,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     //if (g_Game.localPlayer.GetName() == "ERROR463247") { g_esp->GetConfig().testFuns = true; }
 
     Notifications::Push(
-        "Running for player: "+g_Game.localPlayer.GetName(),
+        "Running for player: "+g_Game.localPlayer.name(),
         NotificationType::Info
     );
 
