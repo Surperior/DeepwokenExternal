@@ -236,6 +236,7 @@ void ESP::RenderPlayerInfo(const PlayerInfo& player, ImDrawList* drawList, const
 
     //char headText[128];
     std::string headText = player.name;
+    if (config.useName) { headText = player.cname; }
     //if (config.showHealthText) {
     //    sprintf_s(headText, "%s [%d/%d]", player.name.c_str(),
     //        (int)currentHealth, (int)player.maxHealth);
@@ -258,6 +259,20 @@ void ESP::RenderPlayerInfo(const PlayerInfo& player, ImDrawList* drawList, const
         }
         else {
             headText += " [" + std::to_string((int)currentSanity) + "/" + std::to_string((int)player.sanity.MaxValue) + "]";
+        }
+    }
+
+    if (config.showPower) {
+        if (config.showPlayerName and config.useName) {
+            headText += " [" + player.name + " Power " + std::to_string((int)player.power) + "]";
+        }
+        else {
+            headText += " [Power " + std::to_string((int)player.power) + "]";
+        }
+    }
+    else {
+        if (config.showPlayerName and config.useName) {
+            headText += " [" + player.name + "]";
         }
     }
 
@@ -1014,6 +1029,9 @@ void ESP::RenderMenu(bool* p_open) {
         ImGui::Checkbox("Local Player", &config.showLocalPlayer);
         ImGui::Checkbox("ESP Other Players", &config.showOtherPlayers);
         //ImGui::Checkbox("All Players Mode", &config.allPlayersMode);
+        ImGui::Checkbox("Show Power", &config.showPower);
+        ImGui::Checkbox("Use Character Name", &config.useName);
+        ImGui::Checkbox("Show Player Name", &config.showPlayerName);
 
         ImGui::Checkbox("Show Health", &config.showHealth);
         ImGui::SameLine(); ImGui::Checkbox("Show Health %", &config.showHealthPercentage);
@@ -1079,7 +1097,7 @@ void ESP::RenderMenu(bool* p_open) {
     }
 
     ImGui::Separator();
-    ImGui::Text("Version 1.1.4");
+    ImGui::Text("Version 1.2");
     ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
     ImGui::Text("Press INS to toggle menu");
     ImGui::Text("Press END to exit");
