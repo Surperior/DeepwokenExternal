@@ -7,6 +7,96 @@
 #include "g_mem.h"
 #include <windows.h>
 #include <variant>
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <limits>
+
+struct MSVCString
+{
+    union
+    {
+        char buffer[16];
+        uintptr_t data;
+    };
+
+    size_t size;
+    size_t capacity;
+};
+
+static_assert(sizeof(MSVCString) == 0x20);
+
+constexpr size_t MAX_STRING_LENGTH = 4096;
+
+bool ReadRobloxStringV2(uintptr_t address, std::string& output);
+
+struct AttributeValue
+{
+    enum class Kind { Unknown, String, Bool, Number } kind = Kind::Unknown;
+
+    std::string stringValue;
+    bool        boolValue = false;
+    double      numberValue = 0.0;
+
+    std::string ToString() const
+    {
+        switch (kind)
+        {
+        case Kind::String: return stringValue;
+        case Kind::Bool:   return boolValue ? "true" : "false";
+        case Kind::Number: {
+            // Print integers without a trailing ".0"
+            if (numberValue == std::floor(numberValue) &&
+                std::abs(numberValue) < 1e15)
+            {
+                char buf[32];
+                std::snprintf(buf, sizeof(buf), "%.0f", numberValue);
+                return buf;
+            }
+            char buf[64];
+            std::snprintf(buf, sizeof(buf), "%g", numberValue);
+            return buf;
+        }
+        default: return "<unknown>";
+        }
+    }
+};
+
+struct Attribute
+{
+    std::string    key;
+    AttributeValue value;
+};
+
+namespace Offset
+{
+    constexpr uintptr_t InstanceComponentMap = 0x38;
+    constexpr uintptr_t ComponentIdAttributes = 0x9;
+
+    constexpr uintptr_t ComponentIsMap = 0x0;
+
+    constexpr uintptr_t AttributesMapLength = 0x8;
+    constexpr uintptr_t AttributesMapEntries = 0x18;
+
+    constexpr uintptr_t AttributesArrayLength = 0x10;
+    constexpr uintptr_t AttributesArrayEntries = 0x8;
+
+    constexpr uintptr_t AttributeKey = 0x0;
+    constexpr uintptr_t AttributeValue = 0x18;
+    constexpr uintptr_t AttributeSize = 0x58;
+}
+
+struct ComponentMapEntry
+{
+    uintptr_t componentData;   // +0x00
+    uintptr_t packedId;        // +0x08
+};
+static_assert(sizeof(ComponentMapEntry) == 0x10);
+
+std::vector<Attribute> ReadAttributes(uintptr_t instance);
+Attribute ReadAttribute(uintptr_t instance, std::string attributename);
 
 std::vector<uintptr_t> GetChildren(uintptr_t parent);
 std::vector<uintptr_t> GetDescendants(uintptr_t parent);
@@ -14,6 +104,7 @@ uintptr_t FindChildByClass(uintptr_t parent, const std::string& class_name);
 uintptr_t FindChildByName(uintptr_t parent, const std::string& name);
 uintptr_t FindDescendantByName(uintptr_t instance, const std::string& name);
 uintptr_t FindDescendantByClass(uintptr_t instance, const std::string& className);
+uintptr_t GetInstanceParent(uintptr_t instance);
 std::string ReadRobloxString(uintptr_t name_ptr);
 std::string GetInstanceName(uintptr_t addr);
 std::string GetInstanceClass(uintptr_t addr);
@@ -44,15 +135,17 @@ public:
     //std::string iclass = ::GetInstanceClass(address);
 
     // methods
-    std::string GetClass() const { return ::GetInstanceClass(address); }
-    std::string GetName() const { return ::GetInstanceName(address); }
-    uintptr_t FindFirstChild(std::string name) const { return ::FindChildByName(address, name); }
-    uintptr_t FindFirstChildByClass(std::string class_name) const { return ::FindChildByClass(address, class_name); }
-    uintptr_t FindDescendant(std::string name) const { return ::FindDescendantByName(address, name); }
-    uintptr_t FindDescendantByClass(std::string class_name) const { return ::FindDescendantByClass(address, class_name); }
+    std::string class_name() const { return ::GetInstanceClass(address); }
+    std::string name() const { return ::GetInstanceName(address); }
+    Instance parent() const { return ::GetInstanceParent(address); }
+    Instance FindFirstChild(std::string name) const { return ::FindChildByName(address, name); }
+    Instance FindFirstChildByClass(std::string class_name) const { return ::FindChildByClass(address, class_name); }
+    Instance FindDescendant(std::string name) const { return ::FindDescendantByName(address, name); }
+    Instance FindDescendantByClass(std::string class_name) const { return ::FindDescendantByClass(address, class_name); }
     std::vector<uintptr_t> GetChildren() const { return ::GetChildren(address); }
     std::vector<uintptr_t> GetDescendants() const { return ::GetDescendants(address); }
-
+    std::vector<Attribute> attributes() const { auto attributes = ReadAttributes(address); return attributes; }
+    Attribute attribute(std::string attributename) const { return ::ReadAttribute(address, attributename); }
 };
 
 class Player : public Instance {
@@ -61,10 +154,10 @@ public:
 
     Player(const Instance& other) : Instance(other.get()) {}
 
-    Instance Character(const Instance& live) const
+    Instance character(const Instance& workspace) const
     {
-        std::cout << GetName();
-        return live.FindFirstChild(GetName());
+        std::cout << name();
+        return workspace.FindFirstChild(name());
     }
 };
 
@@ -78,7 +171,7 @@ public:
 
     ValueType value() const
     {
-        std::string cls = GetClass();
+        std::string cls = class_name();
         if (cls == "BoolValue") { bool v = g_Memory.Read<bool>(address + Offsets::Misc::Value); return v; }
         else if (cls == "IntValue") { int v = g_Memory.Read<int>(address + Offsets::Misc::Value); return v; }
         else if (cls == "NumberValue") { double v = g_Memory.Read<double>(address + Offsets::Misc::Value); return v; }
@@ -109,12 +202,7 @@ public:
 
     BasePart(const Instance& other) : Instance(other.get()) {}
 
-    Vector3 Position() const {
-        uintptr_t primitive = g_Memory.ReadPtr(address + Offsets::BasePart::Primitive);
-        return g_Memory.ReadVector3(primitive + Offsets::Primitive::Position);
-    }
-
-    bool CanCollide() const {
+    bool cancollide() const {
 
         uintptr_t primitive = g_Memory.ReadPtr(address + Offsets::BasePart::Primitive);
 
@@ -201,7 +289,7 @@ public:
         return verify == flags;
     }
 
-    bool Anchored() const {
+    bool anchored() const {
 
         uintptr_t primitive = g_Memory.ReadPtr(address + Offsets::BasePart::Primitive);
 
@@ -244,11 +332,20 @@ public:
         return verify == flags;
     }
 
-    float Transparency() const {
+    float transparency() const {
         return g_Memory.ReadFloat(address + Offsets::BasePart::Transparency);
     }
 
-    bool CastShadow() const {
+    bool castShadow() const {
         return g_Memory.ReadBool(address + Offsets::BasePart::CastShadow);
+    }
+
+    Vector3 position() const {
+        uintptr_t primitive = g_Memory.ReadPtr(address + Offsets::BasePart::Primitive);
+        return g_Memory.ReadVector3(primitive + Offsets::Primitive::Position);
+    }
+
+    Vector3 color() const {
+        return g_Memory.ReadVector3(address + Offsets::BasePart::Color3);
     }
 };
