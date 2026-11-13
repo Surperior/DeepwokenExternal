@@ -465,6 +465,23 @@ IDXGISwapChain*          g_pSwapChainGui = nullptr;
 ID3D11RenderTargetView*  g_pRenderTargetViewGui = nullptr;
 bool g_running = true;
 
+struct UpdateTimer {
+    std::chrono::steady_clock::time_point last{};
+    int intervalMs = 0;
+
+    UpdateTimer() = default;
+    explicit UpdateTimer(int ms) : intervalMs(ms) {}
+
+    bool ready() {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
+        if (elapsed >= intervalMs) {
+            last = now;
+            return true;
+        }
+        return false;
+    }
+};
 
 struct AutoParrySettings {
     bool Enabled = true;
@@ -1039,14 +1056,34 @@ MiscInfo GetAllMisc() {
 // AUTOMATION
 //
 
-void SimulateKeyPress(WORD scanCode, bool down)
+//void SimulateKeyPress2(WORD scanCode, bool down)
+//{
+//    INPUT input{};
+//    input.type = INPUT_KEYBOARD;
+//    input.ki.wScan = scanCode;
+//    input.ki.dwFlags = KEYEVENTF_SCANCODE |
+//        (down ? 0 : KEYEVENTF_KEYUP);
+//
+//    SendInput(1, &input, sizeof(INPUT));
+//}
+
+void SimulateKeyPress(WORD virtualKey, bool down)
 {
     INPUT input{};
     input.type = INPUT_KEYBOARD;
-    input.ki.wScan = scanCode;
+    // Convert Virtual Key to Scan Code
+    input.ki.wScan = (WORD)MapVirtualKey(virtualKey, MAPVK_VK_TO_VSC);
     input.ki.dwFlags = KEYEVENTF_SCANCODE |
         (down ? 0 : KEYEVENTF_KEYUP);
 
+    SendInput(1, &input, sizeof(INPUT));
+}
+
+void SimulateMouseClick(bool down)
+{
+    INPUT input{};
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = down ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP;
     SendInput(1, &input, sizeof(INPUT));
 }
 
@@ -1125,6 +1162,72 @@ void AutoCast(int castdelay) {
     std::thread(AutoCastThread, castdelay).detach();
 }
 
+UpdateTimer ankleCutterCD{ 5000 };
+UpdateTimer relentlessHuntCD{ 20000 };
+UpdateTimer mayhemCD{ 15000 };
+UpdateTimer pursuitCD{ 8000 };
+
+std::atomic<bool> SHDEBOUNCE = false;
+
+void SilentUseMove(std::string movename) {
+    if (movename == "Ankle Cutter" and ankleCutterCD.ready()) {
+        SHDEBOUNCE = true;
+        SimulateKeyPress('S', false);
+        SimulateKeyPress('W', false);
+        SimulateKeyPress('W', true); SimulateKeyPress('W', false);
+        SimulateKeyPress('W', true);
+        SimulateKeyPress(VK_CONTROL, true);
+        //SimulateKeyPress('C', true);
+        //SimulateKeyPress('C', false);
+        SimulateMouseClick(true); SimulateMouseClick(false);
+        SimulateKeyPress(VK_CONTROL, false);
+        SimulateKeyPress('W', false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+        SHDEBOUNCE = false;
+    }
+    else if (movename == "Mayhem" and mayhemCD.ready()) {
+        SHDEBOUNCE = true;
+        SimulateKeyPress('Q', true); SimulateKeyPress('Q', false);
+        //SimulateKeyPress('C', true);
+        //SimulateKeyPress('C', false);
+        SimulateMouseClick(true); SimulateMouseClick(false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        SHDEBOUNCE = false;
+    }
+    else if (movename == "Relentless Hunt" and relentlessHuntCD.ready()) {
+        SHDEBOUNCE = true;
+        SimulateKeyPress(VK_SPACE, true);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        SimulateKeyPress(VK_SPACE, false);
+        SimulateMouseClick(true); SimulateMouseClick(false);
+        //SimulateKeyPress('C', true);
+        //SimulateKeyPress('C', false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        SimulateMouseClick(true); SimulateMouseClick(false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        SimulateMouseClick(true); SimulateMouseClick(false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        SimulateMouseClick(true); SimulateMouseClick(false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+        SHDEBOUNCE = false;
+    }
+    else if (movename == "Pursuit" and pursuitCD.ready()) {
+        SHDEBOUNCE = true;
+        SimulateKeyPress('W', false);
+        SimulateKeyPress('W', true); SimulateKeyPress('W', false);
+        SimulateKeyPress('W', true);
+        SimulateMouseClick(true); SimulateMouseClick(false);
+        SimulateKeyPress('W', false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+        SHDEBOUNCE = false;
+    }
+}
+
+void SilentHeart(std::string movename) {
+    if (SHDEBOUNCE) return;
+    std::thread(SilentUseMove,movename).detach();
+}
+
 std::atomic<bool> ardoring = false;
 
 //void ardorSpamThread() {
@@ -1151,24 +1254,6 @@ static bool g_guiVisible = true;
 // 
 // # Preparations
 //
-
-struct UpdateTimer {
-    std::chrono::steady_clock::time_point last{};
-    int intervalMs = 0;
-
-    UpdateTimer() = default;
-    explicit UpdateTimer(int ms) : intervalMs(ms) {}
-
-    bool ready() {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
-        if (elapsed >= intervalMs) {
-            last = now;
-            return true;
-        }
-        return false;
-    }
-};
 
 UpdateTimer fishUpdate{ 50 };
 UpdateTimer castUpdate{ 50 };
@@ -1468,6 +1553,8 @@ bool silent() {
     }
 }
 
+bool IsGameFocused(HWND robloxWindow) { return GetForegroundWindow() == robloxWindow; }
+
 //
 //
 //
@@ -1560,6 +1647,8 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     //if (g_Game.localPlayer.GetName() == "ERROR463247") { g_esp->GetConfig().testFuns = true; }
 
+    if (g_Game.localPlayer.name() == "amagustamogus") { g_esp->GetConfig().autoban = true; }
+
     Notifications::Push(
         "Running for player: "+g_Game.localPlayer.name(),
         NotificationType::Info
@@ -1574,10 +1663,10 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     if (sl) { g_esp->GetConfig().hideConsole = true; }
 
-    using clock = std::chrono::steady_clock;
-    constexpr auto frameTime = std::chrono::microseconds(8333);
+    //using clock = std::chrono::steady_clock;
+    //constexpr auto frameTime = std::chrono::microseconds(8333);
 
-    auto frameStart = clock::now();
+    /*auto frameStart = clock::now();*/
 
     while (g_running) {
 
@@ -1650,11 +1739,11 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
                 SetCaptureExclusion(captureExcluded);
             }
 
-            if (fishUpdate.ready() and g_esp->GetConfig().autoFishing and (!emptying)) {
+            if (fishUpdate.ready() and IsGameFocused(robloxWindow) and g_esp->GetConfig().autoFishing and (!emptying)) {
                 AutoFish();
             }
 
-            if (castUpdate.ready() and g_esp->GetConfig().autoCast and (!autoCastCasting) and (!emptying)) {
+            if (castUpdate.ready() and IsGameFocused(robloxWindow) and g_esp->GetConfig().autoCast and (!autoCastCasting) and (!emptying)) {
                 AutoCast(g_esp->GetConfig().castDelay);
             }
 
@@ -1716,6 +1805,28 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
             if (g_esp->GetConfig().worldEventNotifs) {
                 EventNotifications::Check();
+            }
+
+            if (g_esp->GetConfig().silentmacro and IsGameFocused(robloxWindow) and (GetAsyncKeyState(0x31) & 1)) {
+                SilentHeart("Ankle Cutter");
+            }
+
+            if (g_esp->GetConfig().silentmacro and IsGameFocused(robloxWindow) and (GetAsyncKeyState(0x32) & 1)) {
+                if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
+                    SilentHeart("Mayhem Feint");
+                } 
+                else SilentHeart("Mayhem");
+            }
+
+            if (g_esp->GetConfig().silentmacro and IsGameFocused(robloxWindow) and (GetAsyncKeyState(0x33) & 1)) {
+                if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
+                    SilentHeart("Relentless Hunt Feint");
+                }
+                else SilentHeart("Relentless Hunt");
+            }
+
+            if (g_esp->GetConfig().silentmacro and IsGameFocused(robloxWindow) and (GetAsyncKeyState(0x34) & 1)) {
+                SilentHeart("Pursuit");
             }
 
             char bufff[64];
