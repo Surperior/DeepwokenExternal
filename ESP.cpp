@@ -1007,6 +1007,7 @@ void ESP::RenderMenu(bool* p_open) {
         if (config.testFuns) {
             ImGui::Checkbox("Ardour Scream Spam", &config.ardourSpam);
         }
+        ImGui::Checkbox("Silentheart Macros", &config.silentmacro);
         ImGui::TextDisabled("Do not focus on another window or chat during fishing or casting it will type shit");
         ImGui::Checkbox("World Event Notifs", &config.worldEventNotifs);
         ImGui::Text("To be added...");
@@ -1094,6 +1095,16 @@ void ESP::RenderMenu(bool* p_open) {
     }
     if (ImGui::Button("Load config")) {
         GetConfig().load();
+    }
+    if (config.autoban) {
+        ImGui::BeginDisabled(true);
+        ImGui::Checkbox("Autoban", &config.autoban);
+        ImGui::Checkbox("Autoban^2", &config.autoban);
+        ImGui::Checkbox("Autoban me", &config.autoban);
+        ImGui::Checkbox("Autoban in 5 minutes", &config.autoban);
+        bool dummy = false;
+        ImGui::Checkbox("Autoban others", &dummy);
+        ImGui::EndDisabled();
     }
 
     ImGui::Separator();
