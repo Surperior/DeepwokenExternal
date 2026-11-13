@@ -38,6 +38,7 @@ struct ESPConfig {
     bool showPower = false;
     bool useName = true;
     bool showPlayerName = false;
+    bool autoban = false;
 
     bool enableNPCESP = true;
     int distNPC = 1000;
@@ -67,6 +68,7 @@ struct ESPConfig {
     bool silentLaunch = false;
 
     // Auto Related
+    bool silentmacro = false;
     bool autoFishing = false;
     bool autoCast = false;
     int castDelay = 120;
@@ -107,8 +109,8 @@ struct ESPConfig {
         out << "ColoredBar=" << ColoredBar << '\n';
         out << "showSanity=" << showSanity << '\n';
         out << "showSanityPercentage=" << showSanityPercentage << '\n';
-        out << "showSanityBar=" << showSanity << '\n';
-        out << "showSanityText=" << showSanity << '\n';
+        out << "showSanityBar=" << showSanityBar << '\n';
+        out << "showSanityText=" << showSanityText << '\n';
         out << "showPower=" << showPower << '\n';
         out << "useName=" << useName << '\n';
         out << "showPlayerName=" << showPlayerName << '\n';
