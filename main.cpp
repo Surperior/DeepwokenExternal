@@ -1099,11 +1099,11 @@ void AutoFish() {
     if (!g_Fish.fgui) return;
     if (!g_Fish.frame) return;
     bool keyS = g_Memory.Read<bool>(g_Fish.KeyS + Offsets::GuiObject::Visible);
-    if (keyS) { SimulateKeyPress(0x1F, true); SimulateKeyPress(0x1F, false); return; }
+    if (keyS) { SimulateKeyPress('S', true); SimulateKeyPress('S', false); return; }
     bool keyD = g_Memory.Read<bool>(g_Fish.KeyD + Offsets::GuiObject::Visible);
-    if (keyD) { SimulateKeyPress(0x20, true); SimulateKeyPress(0x20, false); return; }
+    if (keyD) { SimulateKeyPress('D', true); SimulateKeyPress('D', false); return; }
     bool keyA = g_Memory.Read<bool>(g_Fish.KeyA + Offsets::GuiObject::Visible);
-    if (keyA) { SimulateKeyPress(0x1E, true); SimulateKeyPress(0x1E, false); return; }
+    if (keyA) { SimulateKeyPress('A', true); SimulateKeyPress('A', false); return; }
 }
 
 std::atomic<bool> autoCastCasting = false;
@@ -1147,10 +1147,10 @@ void AutoCastThread(int castdelay) {
 
     for (char x : ritual) {
         std::this_thread::sleep_for(std::chrono::milliseconds(castdelay));
-        if (x == 'V') { SimulateKeyPress(0x2F, true); SimulateKeyPress(0x2F, false); }
-        if (x == 'C') { SimulateKeyPress(0x2E, true); SimulateKeyPress(0x2E, false); }
-        if (x == 'Z') { SimulateKeyPress(0x2C, true); SimulateKeyPress(0x2C, false); }
-        if (x == 'X') { SimulateKeyPress(0x2D, true); SimulateKeyPress(0x2D, false); }
+        if (x == 'V') { SimulateKeyPress('V', true); SimulateKeyPress('V', false); }
+        if (x == 'C') { SimulateKeyPress('C', true); SimulateKeyPress('C', false); }
+        if (x == 'Z') { SimulateKeyPress('Z', true); SimulateKeyPress('Z', false); }
+        if (x == 'X') { SimulateKeyPress('X', true); SimulateKeyPress('X', false); }
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1500));
