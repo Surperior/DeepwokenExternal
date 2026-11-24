@@ -206,6 +206,8 @@ Attribute ReadAttribute(uintptr_t instance, std::string attributename)
         ReadAttributeValue(entryAddress + Offset::AttributeValue, attribute.value);
 
         result = attribute;
+        
+        if (attribute.key == attributename) break;
     }
 
     return result;
@@ -458,7 +460,6 @@ uintptr_t GetInstanceParent(uintptr_t instance) {
 
 std::string ReadRobloxString(uintptr_t name_ptr)
 {
-
     return g_Memory.ReadRobloxString(name_ptr);
 }
 
